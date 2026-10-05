@@ -689,9 +689,10 @@ class DraftHandler(BaseHTTPRequestHandler):
 
 
 def serve(port: int, open_browser: bool) -> None:
-    server = ThreadingHTTPServer(("127.0.0.1", port), DraftHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), DraftHandler)
     url = f"http://127.0.0.1:{port}"
     print(f"Paste screenshots at {url}", flush=True)
+    print(f"Share http://YOUR_PUBLIC_IP:{port}", flush=True)
     if open_browser:
         webbrowser.open(url)
     try:
