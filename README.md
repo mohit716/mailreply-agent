@@ -36,3 +36,19 @@ Optional environment variables:
 
 - `EMAIL_DRAFT_MODEL` defaults to `gpt-4.1-mini`
 - `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`
+
+## Reply in a Gmail thread
+
+Paste the conversation link from the browser, for example `https://mail.google.com/mail/u/0/#inbox/...`. The `/u/0/` part is only a browser profile slot. The app uses the Gmail account you connect, and it shows that address so you can confirm it.
+
+The id in the link is not a Gmail API id. The app decodes it when the link uses Gmail's `thread-f` form, then asks Gmail whether that thread is in the connected account. If it is not, the app lists conversations and waits for you to choose. It does not guess.
+
+1. Create a Google Cloud OAuth client (Desktop app) with the Gmail API enabled. Save the JSON as `client_secret.json`. Do not commit it.
+2. Install dependencies: `pip install -r requirements.txt`
+3. Connect the account: `python draft_email.py --gmail-auth`
+4. Set `APP_PASSWORD` on the server. The public page asks for it before it will read or send Gmail.
+5. Paste screenshots, paste the Gmail link, press **Find conversation**, then **Write email**. Press **Send** only when the draft is right.
+
+Send replies only to the latest incoming message, in that same thread. If a newer message arrives first, the app shows it and will not send until you write the reply again. A second click does not send a second copy.
+
+Google's sign-in cannot use the raw `http://52.20.242.94:8765/` address as a redirect. Run `--gmail-auth` on a computer with a browser, then copy `.gmail_token.json` to the server. Keep that file, `client_secret.json`, and `APP_PASSWORD` off GitHub.

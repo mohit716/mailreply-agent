@@ -2,3 +2,7 @@
 .env.*
 __pycache__/
 *.pyc
+.gmail_token.json
+.gmail_sends.json
+.gmail_sends.tmp
+client_secret.json
