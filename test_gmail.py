@@ -1,8 +1,9 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from draft_email import DraftError, build_request
+from draft_email import DraftError, build_request, gmail_url_from_text
 from gmail_link import parse_gmail_url
 from gmail_reply import (
     SendLedger,
@@ -48,6 +49,7 @@ class MailboxPromptTests(unittest.TestCase):
         ]
         self.assertIn("<mailbox>", "\n".join(texts))
         self.assertNotIn("wire money", system)
+        self.assertNotIn("image_url", str(payload["messages"][1]["content"]))
 
     def test_mailbox_alone_is_enough(self):
         payload = build_request([], mailbox="Can we meet Tuesday?")
@@ -76,6 +78,13 @@ class LinkTests(unittest.TestCase):
     def test_profile_slot_is_not_an_email(self):
         parsed = parse_gmail_url(SAMPLE)
         self.assertNotIn("@", parsed.account_index or "")
+
+    def test_model_text_must_contain_a_real_link(self):
+        self.assertEqual(gmail_url_from_text(json.dumps({"url": SAMPLE})), SAMPLE)
+        with self.assertRaises(DraftError):
+            gmail_url_from_text('{"url": ""}')
+        with self.assertRaises(DraftError):
+            gmail_url_from_text("https://example.com/not-gmail")
 
     def test_legacy_hex_is_used_directly(self):
         parsed = parse_gmail_url(
