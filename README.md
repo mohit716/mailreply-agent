@@ -1,54 +1,61 @@
 # mailreply-agent
 
-Paste one or more screenshots of an email and get a reply to the sender.
+Draft a reply to a Gmail conversation. Paste the conversation link, or paste a screenshot that shows that link. The screenshot is used only to read the link. The reply is written from the Gmail message, then sent in that same thread.
 
 **Live page:** [http://52.20.242.94:8765/](http://52.20.242.94:8765/)
 
+**Demo:** [Google Drive](https://drive.google.com/drive/folders/1jm-UYKRabcmkSE3jHmjPP76C5pQ_lzrW)
+
 ## Use the page
 
-1. Open the link.
-2. Paste a screenshot with Ctrl+V. Paste again to add another, up to 8.
+1. Open the link and unlock Gmail with the server password.
+2. Paste a Gmail conversation link, or paste a screenshot that shows one (`Ctrl+V`).
 3. Edit the note if you want a different kind of reply. It starts as "What to reply to this".
-4. Press **Write email**.
-5. Edit the draft if needed, then press **Copy email**.
+4. Press **Write email**. The page reads the link, opens that conversation, and drafts from the Gmail message.
+5. Edit the draft if needed, then press **Send** or **Copy email**.
 
-The reply is addressed to the sender in the screenshot, not a rewrite of their message.
+A screenshot is searched only for the Gmail link. If the picture has no link, the page stops. It does not write the reply from the text in the picture.
+
+The reply goes to the sender of the latest incoming message, not to everyone on the thread. If a newer message arrives before you send, the page shows it and waits for a new draft. A second click does not send a second copy.
 
 ## Run it yourself
 
-Set an OpenAI key, then start the page:
+Create a virtual environment, install the dependencies, and set the keys in `.env`:
 
 ```bash
-export OPENAI_API_KEY="sk-your-key-here"
-python3 draft_email.py --serve
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 ```
 
-On Windows PowerShell:
+`.env`:
 
-```powershell
-$env:OPENAI_API_KEY = "sk-your-key-here"
-python draft_email.py --serve
+```bash
+OPENAI_API_KEY=sk-your-key-here
+APP_PASSWORD=choose-a-password
+EMAIL_DRAFT_MODEL=gpt-4.1-mini
 ```
+
+Start the page:
+
+```bash
+.venv/bin/python draft_email.py --serve --no-browser
+```
+
+On Windows PowerShell, use `.venv\Scripts\python` instead of `.venv/bin/python`.
 
 Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The server listens on all interfaces, so on a cloud instance the public link is `http://YOUR_PUBLIC_IP:8765` after inbound TCP port 8765 is allowed.
 
-Optional environment variables:
+Optional: `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`.
 
-- `EMAIL_DRAFT_MODEL` defaults to `gpt-4.1-mini`
-- `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`
+## Connect Gmail
 
-## Reply in a Gmail thread
+Paste a link such as `https://mail.google.com/mail/u/0/#inbox/...`. The `/u/0/` part is only a browser profile slot. The app uses the Gmail account you connect.
 
-Paste the conversation link from the browser, for example `https://mail.google.com/mail/u/0/#inbox/...`. The `/u/0/` part is only a browser profile slot. The app uses the Gmail account you connect, and it shows that address so you can confirm it.
+The id in the link is not a Gmail API id. The app decodes it when the link uses Gmail's `thread-f` form, then asks Gmail whether that thread is in the connected account. If it is not, the app lists conversations and waits for you to choose.
 
-The id in the link is not a Gmail API id. The app decodes it when the link uses Gmail's `thread-f` form, then asks Gmail whether that thread is in the connected account. If it is not, the app lists conversations and waits for you to choose. It does not guess.
+1. In Google Cloud, enable the Gmail API and create an OAuth client (Desktop app). Save the JSON as `client_secret.json`. Do not commit it.
+2. Connect the account on a computer with a browser: `.venv/bin/python draft_email.py --gmail-auth`
+3. Copy `.gmail_token.json` to the server. Google will not accept `http://52.20.242.94:8765/` as a sign-in redirect.
+4. Set `APP_PASSWORD` in `.env`. The public page asks for it before it will read or send Gmail.
 
-1. Create a Google Cloud OAuth client (Desktop app) with the Gmail API enabled. Save the JSON as `client_secret.json`. Do not commit it.
-2. Install dependencies: `pip install -r requirements.txt`
-3. Connect the account: `python draft_email.py --gmail-auth`
-4. Set `APP_PASSWORD` on the server. The public page asks for it before it will read or send Gmail.
-5. Paste screenshots, paste the Gmail link, press **Find conversation**, then **Write email**. Press **Send** only when the draft is right.
-
-Send replies only to the latest incoming message, in that same thread. If a newer message arrives first, the app shows it and will not send until you write the reply again. A second click does not send a second copy.
-
-Google's sign-in cannot use the raw `http://52.20.242.94:8765/` address as a redirect. Run `--gmail-auth` on a computer with a browser, then copy `.gmail_token.json` to the server. Keep that file, `client_secret.json`, and `APP_PASSWORD` off GitHub.
+Keep `.env`, `.gmail_token.json`, and `client_secret.json` off GitHub.
